@@ -305,19 +305,21 @@ $$
 
 This provides a measurable basis for comparing candidates.
 
+
 ### 7. Multi-objective adaptive selection
 
-Candidates are assessed across five dimensions:
+AIR-LLM evaluates each candidate imputation strategy across five complementary dimensions:
 
-1.  Reconstruction accuracy.
-2.  Distributional fidelity.
-3.  Dependency preservation.
-4.  Downstream predictive utility.
-5.  Computational efficiency.
+1. **Reconstruction accuracy:** Measures the accuracy of recovered values.
+2. **Distributional fidelity:** Evaluates the preservation of feature distributions.
+3. **Dependency preservation:** Assesses the relationships among features.
+4. **Downstream predictive utility:** Measures the impact on predictive performance.
+5. **Computational efficiency:** Evaluates the computational cost of each strategy.
 
-The normalised composite utility is:
+The normalised composite utility function is defined as:
 
 $$
+\boxed{
 U_{jk}
 =
 w_1 A_{jk}
@@ -329,88 +331,156 @@ w_3 R_{jk}
 w_4 P_{jk}
 +
 w_5 E_{jk}
+}
 $$
 
-subject to:
+The weights are subject to the following constraint:
 
 $$
+\boxed{
 \sum_{m=1}^{5} w_m = 1
-$$
-
-Error-based metrics are converted into benefit scores; benefit-based
-metrics are normalised directly.
-
-For feature (X_j), the selected strategy is:
-
-$$
-s_j^{*}
-=
-\underset{s_k \in S_j}{\arg\max}
-\; U(s_k \mid P_j)
-$$
-
-The final decision therefore depends on empirical utility, not the LLM
-ranking alone.
-
-### 8. Confidence estimation and explainability
-
-The paper estimates selection confidence using LLM confidence, the
-empirical utility margin, and stability across repeated evaluations:
-
-$$
-C_j
-=
-\alpha C_{\text{LLM}}
-+
-\beta C_{\text{margin}}
-+
-\gamma C_{\text{stab}}
+}
 $$
 
 where:
 
-$$
-\alpha + \beta + \gamma = 1
-$$
+- $U_{jk}$ denotes the composite utility of candidate strategy $k$ for feature $j$.
+- $A_{jk}$ represents reconstruction accuracy.
+- $D_{jk}$ represents distributional fidelity.
+- $R_{jk}$ represents dependency preservation.
+- $P_{jk}$ represents downstream predictive utility.
+- $E_{jk}$ represents computational efficiency.
+- $w_m$ denotes the weight assigned to each evaluation criterion.
 
-and:
+Error-based metrics are converted into benefit scores, while benefit-based metrics are normalised directly to ensure comparability across evaluation dimensions.
 
-$$
-C_{\text{margin}}
-=
-\frac{U_1-U_2}{|U_1|+\epsilon}
-$$
-
-Here, (U_1) and (U_2) are the highest and second-highest strategy
-utilities. If confidence falls below threshold $\tau$, the
-framework treats the selection as uncertain and triggers additional
-candidate evaluation.
-
-The explainability record includes data evidence, LLM rationale,
-empirical evidence, and the final decision.
-
-### 9. Final imputation
-
-The selected feature-specific strategy is applied to the original
-missing values. The intended output is a completed tabular dataset
-accompanied by evidence supporting the strategy-selection decision.
-
-## Mathematical formulation
-
-The central AIR-LLM decision is:
+For each incomplete feature $X_j$, the optimal strategy is selected as:
 
 $$
 \boxed{
 s_j^{*}
 =
 \underset{s_k \in S_j}{\arg\max}
-\; U(s_k \mid P_j)
+\;
+U(s_k \mid P_j)
 }
 $$
 
-This expresses the core contribution: select an imputation strategy for
-each incomplete feature according to its contextual profile and
-empirically measured multi-objective utility.
+where $S_j$ represents the candidate strategy set and $P_j$ denotes the contextual profile of feature $X_j$.
+
+Thus, AIR-LLM makes its final selection based on **empirical multi-objective utility rather than LLM ranking alone**, enabling adaptive, feature-specific imputation.
+
+
+
+### 8. Confidence estimation and explainability
+
+AIR-LLM estimates the confidence of a feature-level strategy selection by combining the LLM recommendation confidence, the empirical utility margin between the two best-performing strategies, and selection stability across repeated evaluations.
+
+The overall confidence score is defined as:
+
+$$
+\boxed{
+C_j
+=
+\alpha C_{\mathrm{LLM}}
++
+\beta C_{\mathrm{margin}}
++
+\gamma C_{\mathrm{stab}}
+}
+\tag{18}
+$$
+
+The empirical utility-margin confidence is calculated as:
+
+$$
+\boxed{
+C_{\mathrm{margin}}
+=
+\frac{U_1-U_2}
+{|U_1|+\epsilon}
+}
+\tag{19}
+$$
+
+The weighting coefficients satisfy:
+
+$$
+\alpha+\beta+\gamma=1
+$$
+
+where:
+
+- $C_{\mathrm{LLM}}$ denotes the normalised confidence of the LLM recommendation.
+- $C_{\mathrm{margin}}$ represents the confidence derived from the empirical utility margin.
+- $C_{\mathrm{stab}}$ measures the stability of the selected strategy across repeated evaluations.
+- $U_1$ and $U_2$ are the highest and second-highest strategy utility values, respectively.
+- $\alpha$, $\beta$, and $\gamma$ are the corresponding weighting coefficients.
+- $\epsilon$ is a small positive constant used for numerical stability.
+
+If the estimated confidence falls below the predefined threshold,
+
+$$
+C_j < \tau,
+$$
+
+AIR-LLM treats the strategy selection as uncertain and triggers additional candidate evaluation rather than relying on a weak recommendation. This provides a controlled mechanism for resolving ambiguous strategy choices.
+
+#### Explainability record
+
+For each feature-level decision, AIR-LLM maintains the following evidence record:
+
+$$
+\boxed{
+E_j =
+\{
+\text{Data Evidence},
+\text{LLM Rationale},
+\text{Empirical Evidence},
+\text{Decision}
+\}
+$$
+
+This record documents the dataset and missingness characteristics, the LLM's contextual rationale, the empirical performance of candidate strategies, and the final strategy selected using empirical utility.
+
+
+### 9. Final imputation
+
+After empirical evaluation and adaptive strategy selection, AIR-LLM applies the selected feature-specific imputation strategy to the corresponding original missing values.
+
+The selected strategy is determined by the highest normalised multi-objective utility score, ensuring that the final imputation is guided by empirical evidence and the contextual characteristics of each incomplete feature.
+
+The final output consists of:
+
+- A completed tabular dataset with missing values imputed.
+- Feature-specific selected imputation strategies.
+- Supporting empirical evaluation results.
+- Evidence-based records explaining the final strategy-selection decisions.
+
+## Mathematical formulation
+
+The central AIR-LLM decision is to select the strategy with the highest empirical utility for each incomplete feature:
+
+$$
+\boxed{
+s_j^{*}
+=
+\underset{s_k \in S_j}{\arg\max}
+\;
+U(s_k \mid P_j)
+}
+$$
+
+where:
+
+- $s_j^{*}$ denotes the optimal imputation strategy selected for feature $X_j$.
+- $S_j$ represents the set of eligible candidate strategies for feature $X_j$.
+- $s_k$ denotes an individual candidate imputation strategy.
+- $U(s_k \mid P_j)$ represents the normalised multi-objective utility of strategy $s_k$ under the contextual profile $P_j$.
+- $P_j$ represents the dataset and feature-level contextual information used for adaptive selection.
+
+This formulation captures the central contribution of AIR-LLM: **feature-specific, context-aware imputation strategy selection based on LLM-guided recommendations and empirically validated multi-objective utility.**
+
 
 ## Datasets and experimental design
 
@@ -583,16 +653,18 @@ AIR-LLM/
 │   ├── processed/
 │   └── README.md
 ├── notebooks/
-│   ├── 00_environment_and_configuration.ipynb
-│   ├── 01_dataset_loading.ipynb
-│   ├── 02_preprocessing_and_splitting.ipynb
-│   ├── 03_missingness_generation.ipynb
-│   ├── 04_dataset_and_feature_profiling.ipynb
-│   ├── 05_candidate_recommendation.ipynb
-│   ├── 06_empirical_candidate_evaluation.ipynb
-│   ├── 07_adaptive_strategy_selection.ipynb
-│   ├── 08_comparative_evaluation.ipynb
-│   └── 09_final_analysis.ipynb
+│   ├── 00_Project_Configuration.ipynb
+│   ├── 01_Dataset_Preparation.ipynb
+│   ├── 02_Data_preprocessing_and_splitting.ipynb
+│   ├── 03_Missingness_Generation.ipynb
+│   ├── 04_Candidate_Imputation_Methods.ipynb
+│   ├── 05_Dataset_and_Feature_Profiling.ipynb
+│   ├── 06_LLm_Recommendation_Engine.ipynb
+│   ├── 07_Adaptive_Utility_Based_Selection.ipynb
+│   ├── 08_Confidence_+_Abstention.ipynb
+│   ├── 09_Explainability.ipynb
+│   ├── 10_Cross_Dataset_robustness_+_Statistical_Analysis.ipynb
+│   ├── 11_Final_Publication_Results.ipynb
 ├── src/
 │   ├── profiling/
 │   ├── missingness/
@@ -727,9 +799,9 @@ details. Update this entry when the final publisher record is available.
 ``` bibtex
 @article{amzad_airllm,
   title   = {Adaptive Missing-Value Imputation via LLM-Guided Recommendation and Empirical Strategy Selection},
-  author  = {Amzad, Mohd and Ahmad, Faiyaz and Alam, Bashir},
+  author  = {Mohd Amzad, Faiyaz Ahmad, and Bashir Alam},
   journal = {Procedia Computer Science},
-  year    = {2025},
+  year    = {2026},
   note    = {International Conference on Machine Learning and Data Engineering, ICMLDE 5.0}
 }
 ```
@@ -741,9 +813,8 @@ details. Update this entry when the final publisher record is available.
 -   **Authors:** Mohd Amzad, Faiyaz Ahmad, Bashir Alam
 -   **Affiliation:** Department of Computer Engineering, Jamia Millia
     Islamia, New Delhi, India
--   **Corresponding author:** fahmad1@jmi.ac.in
 -   **Publication venue stated in the paper:** Procedia Computer
-    Science; peer review under ICMLDE 5.0, 2026
+    Science; peer review under ICMLDE 5.0, 2026 Dehradun
 
 ### Selected references
 

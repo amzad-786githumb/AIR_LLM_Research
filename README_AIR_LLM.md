@@ -14,7 +14,6 @@ imputation strategy selection**
 **Mohd Amzad · Faiyaz Ahmad\* · Bashir Alam**\
 Department of Computer Engineering, Jamia Millia Islamia, New Delhi,
 India\
-**Corresponding author:** Faiyaz Ahmad · <fahmad1@jmi.ac.in>
 :::
 
 ------------------------------------------------------------------------

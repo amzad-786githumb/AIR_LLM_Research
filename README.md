@@ -207,7 +207,7 @@ AIR-LLM considers three missingness mechanisms:
                                       values after conditioning on
                                       observed data.
 
-  MNAR --- Missing Not At Random  Missingness remains dependent on
+  **MNAR** --- Missing Not At Random  Missingness remains dependent on
                                       unobserved values after accounting
                                       for observed variables.
   -----------------------------------------------------------------------

@@ -250,37 +250,29 @@ directly generate the missing values.
 
 ### 6. Empirical mask-and-recover evaluation
 
-LLM recommendations are treated as hypotheses and tested empirically.
+LLM recommendations are treated as hypotheses and evaluated empirically through a mask-and-recover procedure.
 
 1. Select a subset of observed values in an incomplete feature.
-2. Artificially mask those values.
-3. Apply a candidate strategy using the remaining feature information.
-4. Compare reconstructed values with their known originals.
-5. Measure performance across the evaluation criteria.
+2. Artificially mask the selected values.
+3. Apply a candidate imputation strategy using the remaining feature information.
+4. Compare the reconstructed values with their original, known values.
+5. Evaluate performance across the defined evaluation criteria.
 
-For an incomplete feature \(X_j\), a subset of its observed values is masked:
+For an incomplete feature \(X_j\), a subset of its observed values is selected for artificial masking:
 
-$$
-X_j^{\mathrm{mask}} \subset X_j^{\mathrm{obs}}
-\tag{13}
-$$
+![Equation 13: Masked observed values](images/equations/equation_13.png)
 
 The candidate strategy then reconstructs the masked values using the remaining feature information:
 
-$$
-\widehat{X}_j^{\mathrm{mask}}
-=
-s_k\left(X_j^{\mathrm{obs}}, X_{-j}\right)
-\tag{14}
-$$
+![Equation 14: Reconstruction of masked values](images/equations/equation_14.png)
 
 where \(s_k\) denotes a candidate imputation strategy and \(X_{-j}\) represents the remaining features.
 
-Since the original values are known, reconstructed values can be compared directly with their ground-truth values. Candidate strategies are evaluated on reconstruction accuracy, distributional fidelity, dependency preservation, predictive utility, and computational efficiency.
+Since the original values are known, reconstructed values can be compared directly with their ground-truth values. Candidate strategies are evaluated using five criteria: reconstruction accuracy, distributional fidelity, dependency preservation, downstream predictive utility, and computational efficiency.
 
 ### 7. Multi-objective adaptive selection
 
-Candidates are assessed across five dimensions:
+AIR-LLM assesses candidate strategies across five evaluation dimensions:
 
 1. Reconstruction accuracy.
 2. Distributional fidelity.
@@ -288,72 +280,35 @@ Candidates are assessed across five dimensions:
 4. Downstream predictive utility.
 5. Computational efficiency.
 
-The normalised composite utility for feature \(X_j\) and candidate strategy \(s_k\) is:
+The normalised composite utility for feature \(X_j\) and candidate strategy \(s_k\) is defined as:
 
-$$
-U_{jk}
-=
-w_1 A_{jk}
-+
-w_2 D_{jk}
-+
-w_3 R_{jk}
-+
-w_4 P_{jk}
-+
-w_5 E_{jk}
-\tag{15}
-$$
+![Equation 15: Composite utility](images/equations/equation_15.png)
 
-where \(w_m\) denotes the weight assigned to each evaluation criterion. The weights satisfy:
+where \(A_{jk}\), \(D_{jk}\), \(R_{jk}\), \(P_{jk}\), and \(E_{jk}\) represent the corresponding evaluation scores, and \(w_m\) denotes the weight assigned to each criterion. The weights satisfy:
 
-$$
-\sum_{m=1}^{5} w_m = 1
-\tag{16}
-$$
+![Equation 16: Utility weight constraint](images/equations/equation_16.png)
 
 Error-based metrics are converted into benefit scores, while benefit-based metrics are normalised directly.
 
-The optimal strategy for feature \(X_j\) is selected as:
+The optimal strategy for feature \(X_j\) is selected by maximising the composite utility:
 
-$$
-s_j^{*}
-=
-\underset{s_k \in S_j}{\arg\max}
-\; U_{jk}
-\tag{17}
-$$
+![Equation 17: Optimal strategy selection](images/equations/equation_17.png)
 
-where \(S_j\) is the candidate strategy set for feature \(X_j\).
+where \(S_j\) represents the candidate strategy set for feature \(X_j\).
 
-The final decision is therefore based on empirically measured utility rather than the LLM ranking alone.
+Consequently, the final selection is determined by empirically measured multi-objective utility rather than the LLM ranking alone.
 
 ### 8. Confidence estimation and explainability
 
-AIR-LLM estimates the confidence of a feature-level strategy selection by combining the LLM recommendation confidence, the empirical utility margin between the two best-performing strategies, and selection stability across repeated evaluations.
+AIR-LLM estimates the confidence of each feature-level strategy selection by combining three sources of evidence: LLM recommendation confidence, the empirical utility margin between the two best-performing strategies, and selection stability across repeated evaluations.
 
-The overall confidence score is:
+The overall confidence score is defined as:
 
-$$
-C_j
-=
-\alpha C_{\mathrm{LLM}}
-+
-\beta C_{\mathrm{margin}}
-+
-\gamma C_{\mathrm{stab}}
-\tag{18}
-$$
+![Equation 18: Overall confidence score](images/equations/equation_18.png)
 
 The empirical utility-margin confidence is calculated as:
 
-$$
-C_{\mathrm{margin}}
-=
-\frac{U_1-U_2}
-{|U_1|+\epsilon}
-\tag{19}
-$$
+![Equation 19: Empirical utility-margin confidence](images/equations/equation_19.png)
 
 The weighting coefficients satisfy:
 
@@ -366,7 +321,7 @@ where:
 - \(C_{\mathrm{LLM}}\) denotes the normalised confidence of the LLM recommendation.
 - \(C_{\mathrm{margin}}\) represents confidence derived from the empirical utility margin.
 - \(C_{\mathrm{stab}}\) represents selection stability across repeated evaluations.
-- \(U_1\) and \(U_2\) are the highest and second-highest strategy utility values, respectively.
+- \(U_1\) and \(U_2\) denote the highest and second-highest strategy utility values, respectively.
 - \(\alpha\), \(\beta\), and \(\gamma\) are the corresponding weighting coefficients.
 - \(\epsilon\) is a small positive constant used for numerical stability.
 
@@ -376,11 +331,11 @@ $$
 C_j < \tau
 $$
 
-AIR-LLM treats the strategy selection as uncertain and triggers additional candidate evaluation rather than relying on a weak recommendation.
+AIR-LLM treats the strategy selection as uncertain and triggers additional candidate evaluation rather than relying on a potentially weak recommendation.
 
 #### Explainability record
 
-For each feature-level decision, AIR-LLM maintains the following evidence record:
+For each feature-level decision, AIR-LLM maintains an evidence record:
 
 $$
 E_j =
@@ -392,13 +347,13 @@ E_j =
 \}
 $$
 
-This record documents the dataset and missingness characteristics, the LLM's contextual rationale, the empirical performance of candidate strategies, and the final strategy selected using empirical utility.
+This record documents the dataset and missingness characteristics, the LLM's contextual rationale, the empirical performance of candidate strategies, and the final strategy selected using empirical utility. It provides a traceable basis for understanding and reproducing feature-level imputation decisions.
 
 ### 9. Final imputation
 
 After the optimal strategy has been selected for each incomplete feature, AIR-LLM applies the corresponding feature-specific strategy to the original missing values.
 
-The resulting output is a completed tabular dataset accompanied by the evidence supporting each strategy-selection decision.
+The selected strategies are applied independently according to the empirical decisions obtained during the adaptive selection process. The resulting output is a completed tabular dataset accompanied by the evidence supporting each feature-level strategy-selection decision.
 
 ## Datasets and experimental design
 
